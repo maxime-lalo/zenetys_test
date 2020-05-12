@@ -39,14 +39,28 @@
 				</div>
 			</form>
 		</div>
-		<div class="row">
-			<canvas id="pingChart" width="500"></canvas>
+		<div class="row text-center" id="divChart" style="width: 100%">
+			<canvas id="pingChart"></canvas>
 		</div>
 	</div>
 </body>
 </html>
 <script type="text/javascript">
+	(function() {
+		sizeCanvas();
+		window.onresize = sizeCanvas;
+	})();
+
+	function sizeCanvas(){
+	    var canvas = document.getElementById('pingChart');
+        canvas.width = $('#divChart').width();
+	}
+
 	$('#launchTest').on('click',function(){
+		var canvas = document.getElementById('pingChart');
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
 		var expressionUrl = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
 		var regexUrl = new RegExp(expressionUrl);
 
@@ -56,6 +70,8 @@
 			urlToPing = "https://ping.zenetys.com/api";
 		}
 		if (urlToPing.match(regexUrl)) {
+			$('#launchTest').html('Test en cours... <i class="fas fa-cog fa-spin"></i>');
+			$('#launchTest').prop('disabled',true);
 			pingUrl(urlToPing);
 		}else{
 			Swal.fire(
@@ -85,5 +101,48 @@
 			}
 		},1000);
 
+	}
+
+	function showPing(pings){
+		$('#launchTest').html('Relancer un test <i class="fas fa-play"></i>');
+		$('#launchTest').prop('disabled',false);
+		var color = [];
+		for (var i = 0; i < 5; i++){
+			if (pings[i] > 1000) {
+				color[i] = 'rgba(255,0,0,1)';
+			}else{
+				if (pings[i] > 500) {
+					color[i] = 'rgba(255, 127, 0, 1)';
+				}else{
+					color[i] = 'rgba(0, 255, 0, 1)';
+				}
+			}
+		}
+		var canvas = document.getElementById('pingChart');
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		var myChart = new Chart(ctx, {
+		    type: 'line',
+		    data: {
+		        labels: ['1', '2', '3', '4', '5'],
+		        datasets: [{
+		            label: 'ms',
+		            data: pings,
+		            fill: false,
+		            backgroundColor: color,
+                   	pointRadius: 7,
+                   	pointHoverRadius: 10
+		        }]
+		    },
+		    options: {
+		        scales: {
+		            yAxes: [{
+		                ticks: {
+		                    beginAtZero: true
+		                }
+		            }]
+		        }
+		    }
+		});
 	}
 </script>
