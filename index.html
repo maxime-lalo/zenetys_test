@@ -46,6 +46,9 @@
 </body>
 </html>
 <script type="text/javascript">
+	/* Au lancement de la page on set la width du canvas à la width de la div qui la contient
+	 * On fait également en sorte que le canvas se redimensionne quand la fenêtre est redimensionnée
+	 */ 
 	(function() {
 		sizeCanvas();
 		window.onresize = sizeCanvas;
@@ -56,30 +59,39 @@
 		canvas.width = $('#divChart').width();
 	}
 
+	// Quand on clique sur le bouton pour lancer le test
 	$('#launchTest').on('click',function(){
+		// On clear le canvas pour être sûr qu'il soit propre
 		var canvas = document.getElementById('pingChart');
 		var ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+		// On va venir vérifier à l'aide d'une regex si l'URL est valide
 		var expressionUrl = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
 		var regexUrl = new RegExp(expressionUrl);
 
+		// On récupère la valeur de l'URL saisie
 		var urlToPing = $('#urlToPing').val();
 
+		// Si aucune URL n'a été saisie, par défaut, l'URL de ping est celle ci
 		if (urlToPing == "") {
 			urlToPing = "https://ping.zenetys.com/api";
 		}
 
+		// Si l'URL match la regex
 		if (urlToPing.match(regexUrl)) {
+			// On vient faire une simple requête AJAX sur l'URL pour vérifier si elle est pingable
 			$.ajax({
 				type: 'GET',
 				url: urlToPing,
 				success: function(){
+					// Si on peut ping l'URL, on modifie le bouton pour montrer que le test est en cours, et on lance le test
 					$('#launchTest').html('Test en cours... <i class="fas fa-cog fa-spin"></i>');
 					$('#launchTest').prop('disabled',true);
 					pingUrl(urlToPing);
 				},
 				error: function(){
+					// Si on ne peut pas ping l'URL, on affiche une fenêtre d'erreur
 					Swal.fire(
 						'Erreur',
 						"L'URL ne répond pas ou n'accepte pas les connexion crossdomain",
@@ -89,6 +101,7 @@
 			});
 
 		}else{
+			// Si l'URL ne match pas la regex, on affiche une fenêtre d'erreur
 			Swal.fire(
 				'Erreur',
 				'Veuillez rentrer une URL valide (Exemple : https://www.google.fr/) ',
@@ -97,18 +110,26 @@
 		}
 	});
 
-	
+	// Fonction qui va servir à ping
 	function pingUrl(url){
+		// On crée un array qui contiendra nos 5 pings
 		var pings = [];
 		var i = 0;
+		/* On crée un interval qui va nous permettre de faire le ping toutes les 1 seconde
+		 * Pour être sûr de ne le faire que 5 fois, on incrémente une variable i, et quand celle ci
+		 * arrive à 5, on supprime l'interval
+		 */
 		const interval = setInterval(function(){
 			if (i < 5) {
+				// On crée un objet Ping, qui va nous permettre de récupérer le ping vers une URL
 				var p = new Ping();
 				p.ping(url, function(err,data) {
+					// On ajoute ce ping à notre array et on incrémente notre i
 					pings[i] = data;
 					i++;
 				});
 			}else{
+				// Quand on a fait 5 pings, on affiche le résultat, et on supprime l'interval pour éviter d'avoir une boucle infinie
 				showPing(pings);
 				clearInterval(interval);
 			}
@@ -116,28 +137,48 @@
 
 	}
 
+	// Fonction qui va gérer l'affichage des pings dans les canvas
 	function showPing(pings){
+		// On clear le canvas avant d'écrire dedans pour être sûr qu'il soit vide
 		var canvas = document.getElementById('pingChart');
 		var ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+		// Comme le test est terminé, on peut réactiver le bouton
 		$('#launchTest').html('Relancer un test <i class="fas fa-play"></i>');
 		$('#launchTest').prop('disabled',false);
+
+		// On crée un tableau de couleur, que l'on va alimenter en fonction de notre tableau de ping
 		var color = [];
+
+		// Pour chaque pings
 		for (var i = 0; i < 5; i++){
+			// Si le ping est > 1000 il sera affiché en rouge
 			if (pings[i] > 1000) {
 				color[i] = 'rgba(255,0,0,1)';
 			}else{
-				if (pings[i] > 500) {
+				// Si il est > 200 en orange
+				if (pings[i] > 200) {
 					color[i] = 'rgba(255, 127, 0, 1)';
 				}else{
+					// Sinon il sera affiché en vert
 					color[i] = 'rgba(0, 255, 0, 1)';
 				}
 			}
 		}
+
+		// On récupère notre canvas pour écrire dedans
 		var canvas = document.getElementById('pingChart');
 		var ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		/* On crée un objet chart de type "line"
+		 * Il prend de nombreux paramètres qui permettent de formater le graphique comme on le souhaite
+		 * Labels est le petit numéro qui s'affiche sur l'axe X
+		 * Datasets correspond aux données à afficher, de quelle couleur les afficher, de quelle taille, etc
+		 * Les options servent à paramétrer le graphique de manière globale, ici on lui indique simplement
+		 * que l'on souhaite que l'axe y commence forcément à 0
+		 */
 		var myChart = new Chart(ctx, {
 			type: 'line',
 			data: {
