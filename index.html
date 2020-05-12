@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Pinger</title>
+	<title>TestPing</title>
 	<meta charset="UTF-8">
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 	<script
@@ -52,8 +52,8 @@
 	})();
 
 	function sizeCanvas(){
-	    var canvas = document.getElementById('pingChart');
-        canvas.width = $('#divChart').width();
+		var canvas = document.getElementById('pingChart');
+		canvas.width = $('#divChart').width();
 	}
 
 	$('#launchTest').on('click',function(){
@@ -69,24 +69,37 @@
 		if (urlToPing == "") {
 			urlToPing = "https://ping.zenetys.com/api";
 		}
+
 		if (urlToPing.match(regexUrl)) {
-			$('#launchTest').html('Test en cours... <i class="fas fa-cog fa-spin"></i>');
-			$('#launchTest').prop('disabled',true);
-			pingUrl(urlToPing);
+			$.ajax({
+				type: 'GET',
+				url: urlToPing,
+				success: function(){
+					$('#launchTest').html('Test en cours... <i class="fas fa-cog fa-spin"></i>');
+					$('#launchTest').prop('disabled',true);
+					pingUrl(urlToPing);
+				},
+				error: function(){
+					Swal.fire(
+						'Erreur',
+						"L'URL ne répond pas ou n'accepte pas les connexion crossdomain",
+						'error'
+					)
+				}
+			});
+
 		}else{
 			Swal.fire(
-			  'Erreur',
-			  'Veuillez rentrer une URL valide',
-			  'error'
+				'Erreur',
+				'Veuillez rentrer une URL valide (Exemple : https://www.google.fr/) ',
+				'error'
 			)
-			console.log("url non valide");
 		}
 	});
 
 	
 	function pingUrl(url){
 		var pings = [];
-		console.log(url);
 		var i = 0;
 		const interval = setInterval(function(){
 			if (i < 5) {
@@ -104,6 +117,10 @@
 	}
 
 	function showPing(pings){
+		var canvas = document.getElementById('pingChart');
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
 		$('#launchTest').html('Relancer un test <i class="fas fa-play"></i>');
 		$('#launchTest').prop('disabled',false);
 		var color = [];
@@ -122,27 +139,27 @@
 		var ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		var myChart = new Chart(ctx, {
-		    type: 'line',
-		    data: {
-		        labels: ['1', '2', '3', '4', '5'],
-		        datasets: [{
-		            label: 'ms',
-		            data: pings,
-		            fill: false,
-		            backgroundColor: color,
-                   	pointRadius: 7,
-                   	pointHoverRadius: 10
-		        }]
-		    },
-		    options: {
-		        scales: {
-		            yAxes: [{
-		                ticks: {
-		                    beginAtZero: true
-		                }
-		            }]
-		        }
-		    }
+			type: 'line',
+			data: {
+				labels: ['1', '2', '3', '4', '5'],
+				datasets: [{
+					label: 'ms',
+					data: pings,
+					fill: false,
+					backgroundColor: color,
+					pointRadius: 7,
+					pointHoverRadius: 10
+				}]
+			},
+			options: {
+				scales: {
+					yAxes: [{
+						ticks: {
+							beginAtZero: true
+						}
+					}]
+				}
+			}
 		});
 	}
 </script>
