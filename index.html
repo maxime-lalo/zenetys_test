@@ -127,10 +127,11 @@
 					// On ajoute ce ping à notre array et on incrémente notre i
 					pings[i] = data;
 					i++;
+					// On regénère le chart à chaque ping
+					showPing(pings);
 				});
 			}else{
-				// Quand on a fait 5 pings, on affiche le résultat, et on supprime l'interval pour éviter d'avoir une boucle infinie
-				showPing(pings);
+				// Quand on a fait 5 pings on supprime l'interval pour éviter d'avoir une boucle infinie
 				clearInterval(interval);
 			}
 		},1000);
